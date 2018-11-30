@@ -50,6 +50,7 @@ import org.opennms.core.criteria.CriteriaBuilder;
 import org.opennms.core.spring.BeanUtils;
 import org.opennms.core.utils.LldpUtils.LldpChassisIdSubType;
 import org.opennms.core.utils.LldpUtils.LldpPortIdSubType;
+import org.opennms.core.utils.SystemPropertiesUtils;
 import org.opennms.netmgt.dao.api.BridgeElementDao;
 import org.opennms.netmgt.dao.api.BridgeTopologyDao;
 import org.opennms.netmgt.dao.api.CdpElementDao;
@@ -64,8 +65,6 @@ import org.opennms.netmgt.dao.api.NodeDao;
 import org.opennms.netmgt.dao.api.OspfElementDao;
 import org.opennms.netmgt.dao.api.OspfLinkDao;
 import org.opennms.netmgt.dao.api.SnmpInterfaceDao;
-import org.opennms.netmgt.dao.hibernate.BridgeTopologyDaoHibernate;
-import org.opennms.netmgt.dao.hibernate.IpNetToMediaDaoHibernate;
 import org.opennms.netmgt.model.BridgeElement;
 import org.opennms.netmgt.model.BridgeElement.BridgeDot1dBaseType;
 import org.opennms.netmgt.model.BridgeElement.BridgeDot1dStpProtocolSpecification;
@@ -485,7 +484,7 @@ public class EnLinkdElementFactory implements InitializingBean,
             linknode.setLldpRemChassisIdUrl(getNodeUrl(remNode.getId()));
             if (link.getLldpRemPortIdSubType() == LldpPortIdSubType.LLDP_PORTID_SUBTYPE_LOCAL) {
                 try {
-                    Integer remIfIndex = Integer.getInteger(link.getLldpRemPortId());
+                    Integer remIfIndex = SystemPropertiesUtils.getInteger(link.getLldpRemPortId());
                     linknode.setLldpRemPortUrl(getSnmpInterfaceUrl(Integer.valueOf(remNode.getId()),
                                                                    remIfIndex));
                 } catch (Exception e) {

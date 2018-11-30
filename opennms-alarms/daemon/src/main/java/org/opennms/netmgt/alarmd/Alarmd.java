@@ -30,14 +30,10 @@ package org.opennms.netmgt.alarmd;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import org.opennms.core.utils.SystemPropertiesUtils;
 import org.opennms.netmgt.alarmd.api.NorthboundAlarm;
 import org.opennms.netmgt.alarmd.api.Northbounder;
 import org.opennms.netmgt.alarmd.api.NorthbounderException;
@@ -54,7 +50,6 @@ import org.opennms.netmgt.xml.event.Event;
 import org.opennms.netmgt.xml.event.Parm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
@@ -73,7 +68,7 @@ public class Alarmd implements SpringServiceDaemon, ThreadAwareEventListener {
     /** Constant <code>NAME="Alarmd"</code> */
     public static final String NAME = "Alarmd";
 
-    protected static final Integer THREADS = Integer.getInteger("org.opennms.alarmd.threads", 4);
+    protected static final Integer THREADS = SystemPropertiesUtils.getInteger("org.opennms.alarmd.threads", 4);
 
     private List<Northbounder> m_northboundInterfaces = new ArrayList<>();
 
