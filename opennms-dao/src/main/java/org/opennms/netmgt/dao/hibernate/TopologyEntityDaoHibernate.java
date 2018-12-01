@@ -32,7 +32,9 @@ import java.util.List;
 
 import org.opennms.netmgt.dao.api.TopologyEntityDao;
 import org.opennms.netmgt.model.CdpLinkTopologyEntity;
+import org.opennms.netmgt.model.IpInterfaceTopologyEntity;
 import org.opennms.netmgt.model.NodeTopologyEntity;
+import org.opennms.netmgt.model.SnmpInterfaceTopologyEntity;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
 
 public class TopologyEntityDaoHibernate extends HibernateDaoSupport implements TopologyEntityDao {
@@ -48,5 +50,20 @@ public class TopologyEntityDaoHibernate extends HibernateDaoSupport implements T
         return (List<CdpLinkTopologyEntity>)getHibernateTemplate().find(
                 "select new org.opennms.netmgt.model.CdpLinkTopologyEntity(l.id, l.node.id, l.cdpCacheIfIndex, " +
                         "l.cdpInterfaceName, l.cdpCacheAddress, l.cdpCacheDeviceId, l.cdpCacheDevicePort) from org.opennms.netmgt.model.CdpLink l");
+    }
+
+    @Override
+    public List<SnmpInterfaceTopologyEntity> getSnmpTopologyEntities() {
+        return (List<SnmpInterfaceTopologyEntity>)getHibernateTemplate().find(
+                "select new org.opennms.netmgt.model.SnmpInterfaceTopologyEntity(" +
+                        "i.id, i.ifIndex, i.ifName, i.ifSpeed, i.node.id) from org.opennms.netmgt.model.OnmsSnmpInterface i");
+    }
+
+    @Override
+    public List<IpInterfaceTopologyEntity> getIpTopologyEntities() {
+        return (List<IpInterfaceTopologyEntity>)getHibernateTemplate().find(
+                "select new org.opennms.netmgt.model.IpInterfaceTopologyEntity(" +
+                        "i.id, i.ipAddress, i.isManaged, i.isSnmpPrimary, i.node.id, i.snmpInterface.id) " +
+                        "from org.opennms.netmgt.model.OnmsIpInterface i");
     }
 }

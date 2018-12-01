@@ -34,7 +34,9 @@ import java.util.concurrent.TimeUnit;
 import org.opennms.netmgt.dao.api.TopologyEntityCache;
 import org.opennms.netmgt.dao.api.TopologyEntityDao;
 import org.opennms.netmgt.model.CdpLinkTopologyEntity;
+import org.opennms.netmgt.model.IpInterfaceTopologyEntity;
 import org.opennms.netmgt.model.NodeTopologyEntity;
+import org.opennms.netmgt.model.SnmpInterfaceTopologyEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,6 +70,24 @@ public class TopologyEntityCacheImpl implements TopologyEntityCache {
             }
     );
 
+    private LoadingCache<String, List<SnmpInterfaceTopologyEntity>> snmpInterfaceTopologyEntities = createCache(
+            new CacheLoader<String, List<SnmpInterfaceTopologyEntity>>() {
+                @Override
+                public List<SnmpInterfaceTopologyEntity> load(String key) {
+                    return topologyEntityDao.getSnmpTopologyEntities();
+                }
+            }
+    );
+
+    private LoadingCache<String, List<IpInterfaceTopologyEntity>> ipInterfaceTopologyEntities = createCache(
+            new CacheLoader<String, List<IpInterfaceTopologyEntity>>() {
+                @Override
+                public List<IpInterfaceTopologyEntity> load(String key) {
+                    return topologyEntityDao.getIpTopologyEntities();
+                }
+            }
+    );
+
     private <Key, Value> LoadingCache<Key, Value> createCache(CacheLoader<Key, Value> loader) {
         return CacheBuilder
                 .newBuilder()
@@ -75,19 +95,32 @@ public class TopologyEntityCacheImpl implements TopologyEntityCache {
                 .build(loader);
     }
 
-
+    @Override
     public List<NodeTopologyEntity> getNodeTopolgyEntities() {
         return this.nodeTopologyEntities.getUnchecked(KEY);
     }
 
+    @Override
     public List<CdpLinkTopologyEntity> getCdpLinkTopologyEntities() {
         return this.cdpLinkTopologyEntities.getUnchecked(KEY);
+    }
+
+    @Override
+    public List<SnmpInterfaceTopologyEntity> getSnmpTopologyEntities(){
+        return this.snmpInterfaceTopologyEntities.getUnchecked(KEY);
+    }
+
+    @Override
+    public List<IpInterfaceTopologyEntity> getIpTopologyEntities(){
+        return this.ipInterfaceTopologyEntities.getUnchecked(KEY);
     }
 
     @Override
     public void refresh(){
         nodeTopologyEntities.refresh(KEY);
         cdpLinkTopologyEntities.refresh(KEY);
+        snmpInterfaceTopologyEntities.refresh(KEY);
+        ipInterfaceTopologyEntities.refresh(KEY);
     }
 
     private int getCacheDuration(){
