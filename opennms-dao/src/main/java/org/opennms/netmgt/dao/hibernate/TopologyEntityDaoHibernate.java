@@ -31,6 +31,7 @@ package org.opennms.netmgt.dao.hibernate;
 import java.util.List;
 
 import org.opennms.netmgt.dao.api.TopologyEntityDao;
+import org.opennms.netmgt.model.CdpElementTopologyEntity;
 import org.opennms.netmgt.model.CdpLinkTopologyEntity;
 import org.opennms.netmgt.model.NodeTopologyEntity;
 import org.springframework.orm.hibernate3.support.HibernateDaoSupport;
@@ -49,4 +50,12 @@ public class TopologyEntityDaoHibernate extends HibernateDaoSupport implements T
                 "select new org.opennms.netmgt.model.CdpLinkTopologyEntity(l.id, l.node.id, l.cdpCacheIfIndex, " +
                         "l.cdpInterfaceName, l.cdpCacheAddress, l.cdpCacheDeviceId, l.cdpCacheDevicePort) from org.opennms.netmgt.model.CdpLink l");
     }
+
+    @Override
+    public List<CdpElementTopologyEntity> getCdpElementTopologyEntities() {
+        return (List<CdpElementTopologyEntity>)getHibernateTemplate().find(
+                "select new org.opennms.netmgt.model.CdpElementTopologyEntity(e.id, e.cdpGlobalDeviceId, e.node.id)" +
+                        "from org.opennms.netmgt.model.CdpElement e");
+    }
+
 }

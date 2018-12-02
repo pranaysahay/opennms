@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import org.opennms.netmgt.dao.api.TopologyEntityCache;
 import org.opennms.netmgt.dao.api.TopologyEntityDao;
+import org.opennms.netmgt.model.CdpElementTopologyEntity;
 import org.opennms.netmgt.model.CdpLinkTopologyEntity;
 import org.opennms.netmgt.model.NodeTopologyEntity;
 import org.slf4j.Logger;
@@ -68,6 +69,15 @@ public class TopologyEntityCacheImpl implements TopologyEntityCache {
             }
     );
 
+    private LoadingCache<String, List<CdpElementTopologyEntity>> cdpElementTopologyEntities = createCache(
+            new CacheLoader<String, List<CdpElementTopologyEntity>>() {
+                @Override
+                public List<CdpElementTopologyEntity> load(String key) {
+                    return topologyEntityDao.getCdpElementTopologyEntities();
+                }
+            }
+    );
+
     private <Key, Value> LoadingCache<Key, Value> createCache(CacheLoader<Key, Value> loader) {
         return CacheBuilder
                 .newBuilder()
@@ -82,6 +92,10 @@ public class TopologyEntityCacheImpl implements TopologyEntityCache {
 
     public List<CdpLinkTopologyEntity> getCdpLinkTopologyEntities() {
         return this.cdpLinkTopologyEntities.getUnchecked(KEY);
+    }
+
+    public List<CdpElementTopologyEntity> getCdpElementTopologyEntities() {
+        return this.cdpElementTopologyEntities.getUnchecked(KEY);
     }
 
     @Override

@@ -26,27 +26,38 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.netmgt.dao.api;
+package org.opennms.netmgt.model;
 
-import java.util.List;
+import java.util.Optional;
 
-import org.opennms.netmgt.model.CdpElementTopologyEntity;
-import org.opennms.netmgt.model.CdpLinkTopologyEntity;
-import org.opennms.netmgt.model.NodeTopologyEntity;
+public class CdpElementTopologyEntity {
+    private final Integer id;
+    private final String cdpGlobalDeviceId;
+    private final Integer nodeId;
 
-/**
- * Caches TopologyEmtities. This is a cache wrapper around @{@link TopologyEntityDao}. See there for an explanation of
- * TopologyEntrities.
- * We use the cache to improve the displaying speed of topologies.
- */
-public interface TopologyEntityCache {
+    public CdpElementTopologyEntity(Integer id, String cdpGlobalDeviceId, Integer nodeId){
+        this.id = id;
+        this.cdpGlobalDeviceId = cdpGlobalDeviceId;
+        this.nodeId = nodeId;
+    }
 
-    List<NodeTopologyEntity> getNodeTopolgyEntities();
+    public static CdpElementTopologyEntity toCdpElementTopologyEntity(CdpElement element){
+        return new CdpElementTopologyEntity(
+                element.getId(),
+                element.getCdpGlobalDeviceId(),
+                Optional.ofNullable(element.getNode()).map(OnmsNode::getId).orElse(null)
+                );
+    }
 
-    List<CdpLinkTopologyEntity> getCdpLinkTopologyEntities();
+    public Integer getId() {
+        return id;
+    }
 
-    List<CdpElementTopologyEntity> getCdpElementTopologyEntities();
+    public String getCdpGlobalDeviceId() {
+        return cdpGlobalDeviceId;
+    }
 
-    void refresh();
-
+    public Integer getNodeId() {
+        return nodeId;
+    }
 }
