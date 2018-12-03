@@ -61,14 +61,13 @@ import org.opennms.netmgt.dao.api.NodeDao;
 import org.opennms.netmgt.dao.api.OspfLinkDao;
 import org.opennms.netmgt.dao.api.SnmpInterfaceDao;
 import org.opennms.netmgt.dao.api.TopologyDao;
-import org.opennms.netmgt.model.CdpElement;
 import org.opennms.netmgt.model.CdpElementTopologyEntity;
 import org.opennms.netmgt.model.CdpLinkTopologyEntity;
 import org.opennms.netmgt.model.FilterManager;
 import org.opennms.netmgt.model.IpNetToMedia;
-import org.opennms.netmgt.model.IsIsElement;
+import org.opennms.netmgt.model.IsIsElementTopologyEntity;
 import org.opennms.netmgt.model.IsIsLink;
-import org.opennms.netmgt.model.LldpElement;
+import org.opennms.netmgt.model.LldpElementTopologyEntity;
 import org.opennms.netmgt.model.LldpLink;
 import org.opennms.netmgt.model.OnmsIpInterface;
 import org.opennms.netmgt.model.OnmsNode;
@@ -127,11 +126,8 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
     private FilterManager m_filterManager;
 
     private LldpLinkDao m_lldpLinkDao;
-    private LldpElementDao m_lldpElementDao;
-    private CdpElementDao m_cdpElementDao;
     private OspfLinkDao m_ospfLinkDao;
     private IsIsLinkDao m_isisLinkDao;
-    private IsIsElementDao m_isisElementDao;
     private BridgeTopologyDao m_bridgeTopologyDao;
     private IpNetToMediaDao m_ipNetToMediaDao;
 
@@ -280,13 +276,13 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
 
         List<LldpLink> allLinks = m_lldpLinkDao.findAll();
         // Index the LLDP elements by node id
-        Map<Integer, LldpElement> nodelldpelementidMap = new HashMap<Integer, LldpElement>();
+        Map<Integer, LldpElementTopologyEntity> nodelldpelementidMap = new HashMap<>();
         Map<Integer, LinkdVertex> nodeVertexMap = new HashMap<Integer, LinkdVertex>();
-        for (LldpElement lldpelement: m_lldpElementDao.findAll()) {
-            nodelldpelementidMap.put(lldpelement.getNode().getId(), lldpelement);
-            LinkdVertex vertex = (LinkdVertex)getVertex(TOPOLOGY_NAMESPACE_LINKD, lldpelement.getNode().getNodeId());
+        for (LldpElementTopologyEntity lldpelement: m_topologyEntityCache.getLldpElementTopologyEntities()) {
+            nodelldpelementidMap.put(lldpelement.getNodeId(), lldpelement);
+            LinkdVertex vertex = (LinkdVertex)getVertex(TOPOLOGY_NAMESPACE_LINKD, lldpelement.getNodeIdAsString());
             vertex.getProtocolSupported().add(ProtocolSupported.LLDP);
-            nodeVertexMap.put(lldpelement.getNode().getId(), vertex);
+            nodeVertexMap.put(lldpelement.getNodeId(), vertex);
             System.err.println(vertex.getId());
         }
 
@@ -307,7 +303,7 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
         }
     }
 
-    List<Pair<LldpLink, LldpLink>> matchLldpLinks(Map<Integer, LldpElement> nodelldpelementidMap, List<LldpLink> allLinks) {
+    List<Pair<LldpLink, LldpLink>> matchLldpLinks(Map<Integer, LldpElementTopologyEntity> nodelldpelementidMap, List<LldpLink> allLinks) {
         List<Pair<LldpLink, LldpLink>> results = new ArrayList<>();
 
         // 1.) create mapping
@@ -430,25 +426,13 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
 
 
     private void getCdpLinks() {
-        boolean performanceOptimized = false;
-        List<CdpElementTopologyEntity> cdpElements;
-        long time = System.currentTimeMillis();
-        if(performanceOptimized){
-            cdpElements = m_topologyEntityCache.getCdpElementTopologyEntities();
-        } else {
-            cdpElements = new ArrayList<>();
-            for(CdpElement cdpElement : m_cdpElementDao.findAll()){
-                cdpElements.add(CdpElementTopologyEntity.toCdpElementTopologyEntity(cdpElement));
-            }
-        }
+        List<CdpElementTopologyEntity> cdpElements = m_topologyEntityCache.getCdpElementTopologyEntities();
         List<CdpLinkTopologyEntity> allLinks = m_topologyEntityCache.getCdpLinkTopologyEntities();
         List<Pair<CdpLinkTopologyEntity, CdpLinkTopologyEntity>> matchedCdpLinks = matchCdpLinks(cdpElements, allLinks);
         for (Pair<CdpLinkTopologyEntity, CdpLinkTopologyEntity> pair : matchedCdpLinks) {
             connectCdpLinkPair(pair);
         }
-        System.out.println("TIMER: getCdpLinks ("
-                +(performanceOptimized?"optimized":"original")
-                +")took "+(System.currentTimeMillis()-time)+"ms");
+
     }
 
     private void connectCdpLinkPair(Pair<CdpLinkTopologyEntity, CdpLinkTopologyEntity> pair){
@@ -523,7 +507,7 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
 
     private void getIsIsLinks() {
 
-        List<IsIsElement> elements = m_isisElementDao.findAll();
+        List<IsIsElementTopologyEntity> elements = m_topologyEntityCache.getIsIsElementTopologyEntities();
         List<IsIsLink> allLinks = m_isisLinkDao.findAll();
 
         List<Pair<IsIsLink, IsIsLink>> results = matchIsIsLinks(elements, allLinks);
@@ -546,17 +530,17 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
         }
     }
 
-    List<Pair<IsIsLink, IsIsLink>> matchIsIsLinks(final List<IsIsElement> elements, final List<IsIsLink> allLinks) {
+    List<Pair<IsIsLink, IsIsLink>> matchIsIsLinks(final List<IsIsElementTopologyEntity> elements, final List<IsIsLink> allLinks) {
 
         // 1.) create lookupMaps
-        Map<Integer, IsIsElement> elementmap = new HashMap<Integer, IsIsElement>();
-        for (IsIsElement element: elements) {
-            elementmap.put(element.getNode().getId(), element);
+        Map<Integer, IsIsElementTopologyEntity> elementmap = new HashMap<>();
+        for (IsIsElementTopologyEntity element: elements) {
+            elementmap.put(element.getNodeId(), element);
         }
 
         Map<CompositeKey, IsIsLink> targetLinkMap = new HashMap<>();
         for (IsIsLink targetLink : allLinks) {
-            IsIsElement targetElement = elementmap.get(targetLink.getNode().getId());
+            IsIsElementTopologyEntity targetElement = elementmap.get(targetLink.getNode().getId());
             targetLinkMap.put(new CompositeKey(targetLink.getIsisISAdjIndex(),
                       targetElement.getIsisSysID(),
                       targetLink.getIsisISAdjNeighSysID()), targetLink);
@@ -573,7 +557,7 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
             if (LOG.isDebugEnabled()) {
                 LOG.debug("getIsIsLinks: source: {}", sourceLink.printTopology());
             }
-            IsIsElement sourceElement = elementmap.get(sourceLink.getNode().getId());
+            IsIsElementTopologyEntity sourceElement = elementmap.get(sourceLink.getNode().getId());
             IsIsLink targetLink = targetLinkMap.get(new CompositeKey(sourceLink.getIsisISAdjIndex(),
                     sourceLink.getIsisISAdjNeighSysID(),
                     sourceElement.getIsisSysID()));
@@ -795,14 +779,6 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
         return m_lldpLinkDao;
     }
 
-    public void setLldpElementDao(LldpElementDao lldpElementDao) {
-        m_lldpElementDao = lldpElementDao;
-    }
-
-    public LldpElementDao getLldpElementDao() {
-        return m_lldpElementDao;
-    }
-
     public void setOspfLinkDao(OspfLinkDao ospfLinkDao) {
         m_ospfLinkDao = ospfLinkDao;
     }
@@ -819,14 +795,6 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
         m_isisLinkDao = isisLinkDao;
     }
 
-    public IsIsElementDao getIsisElementDao() {
-        return m_isisElementDao;
-    }
-
-    public void setIsisElementDao(IsIsElementDao isisElementDao) {
-        m_isisElementDao = isisElementDao;
-    }
-
     public BridgeTopologyDao getBridgeTopologyDao() {
         return m_bridgeTopologyDao;
     }
@@ -841,14 +809,6 @@ public class LinkdTopologyProvider extends AbstractTopologyProvider implements G
     
     public void setIpNetToMediaDao(IpNetToMediaDao ipNetToMediaDao) {
         m_ipNetToMediaDao = ipNetToMediaDao;
-    }
-
-    public CdpElementDao getCdpElementDao() {
-        return m_cdpElementDao;
-    }
-
-    public void setCdpElementDao(CdpElementDao cdpElementDao) {
-        m_cdpElementDao = cdpElementDao;
     }
         
     @Override

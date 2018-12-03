@@ -26,27 +26,35 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.netmgt.dao.api;
+package org.opennms.netmgt.model;
 
-import java.util.List;
+public class LldpElementTopologyEntity {
+    private final Integer id;
+    private final String lldpChassisId;
+    private final Integer nodeId;
 
-import org.opennms.netmgt.model.CdpElementTopologyEntity;
-import org.opennms.netmgt.model.CdpLinkTopologyEntity;
-import org.opennms.netmgt.model.IsIsElementTopologyEntity;
-import org.opennms.netmgt.model.LldpElementTopologyEntity;
-import org.opennms.netmgt.model.NodeTopologyEntity;
+    public LldpElementTopologyEntity(Integer id, String lldpChassisId, Integer nodeId) {
+        this.id = id;
+        this.lldpChassisId = lldpChassisId;
+        this.nodeId = nodeId;
+    }
 
-/**
- * Caches TopologyEmtities. This is a cache wrapper around @{@link TopologyEntityDao}. See there for an explanation of
- * TopologyEntrities.
- * We use the cache to improve the displaying speed of topologies.
- */
-public interface TopologyEntityCache {
-    List<NodeTopologyEntity> getNodeTopolgyEntities();
-    List<CdpLinkTopologyEntity> getCdpLinkTopologyEntities();
-    List<CdpElementTopologyEntity> getCdpElementTopologyEntities();
-    List<IsIsElementTopologyEntity> getIsIsElementTopologyEntities();
-    List<LldpElementTopologyEntity> getLldpElementTopologyEntities();
-    void refresh();
+    public Integer getId() {
+        return id;
+    }
 
+    public String getLldpChassisId() {
+        return lldpChassisId;
+    }
+
+    public Integer getNodeId() {
+        return nodeId;
+    }
+
+    public String getNodeIdAsString() {
+        if (getNodeId() != null) {
+            return getNodeId().toString();
+        }
+        return null;
+    }
 }

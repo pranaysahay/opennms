@@ -35,6 +35,8 @@ import org.opennms.netmgt.dao.api.TopologyEntityCache;
 import org.opennms.netmgt.dao.api.TopologyEntityDao;
 import org.opennms.netmgt.model.CdpElementTopologyEntity;
 import org.opennms.netmgt.model.CdpLinkTopologyEntity;
+import org.opennms.netmgt.model.IsIsElementTopologyEntity;
+import org.opennms.netmgt.model.LldpElementTopologyEntity;
 import org.opennms.netmgt.model.NodeTopologyEntity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +53,7 @@ public class TopologyEntityCacheImpl implements TopologyEntityCache {
 
     private TopologyEntityDao topologyEntityDao;
 
-    private LoadingCache<String, List<NodeTopologyEntity>> nodeTopologyEntities = createCache(
+    private final LoadingCache<String, List<NodeTopologyEntity>> nodeTopologyEntities = createCache(
             new CacheLoader<String, List<NodeTopologyEntity>>() {
                 @Override
                 public List<NodeTopologyEntity> load(String key) {
@@ -60,7 +62,7 @@ public class TopologyEntityCacheImpl implements TopologyEntityCache {
             }
     );
 
-    private LoadingCache<String, List<CdpLinkTopologyEntity>> cdpLinkTopologyEntities = createCache(
+    private final LoadingCache<String, List<CdpLinkTopologyEntity>> cdpLinkTopologyEntities = createCache(
             new CacheLoader<String, List<CdpLinkTopologyEntity>>() {
                 @Override
                 public List<CdpLinkTopologyEntity> load(String key) {
@@ -69,11 +71,30 @@ public class TopologyEntityCacheImpl implements TopologyEntityCache {
             }
     );
 
-    private LoadingCache<String, List<CdpElementTopologyEntity>> cdpElementTopologyEntities = createCache(
+    private final LoadingCache<String, List<CdpElementTopologyEntity>> cdpElementTopologyEntities = createCache(
             new CacheLoader<String, List<CdpElementTopologyEntity>>() {
                 @Override
                 public List<CdpElementTopologyEntity> load(String key) {
                     return topologyEntityDao.getCdpElementTopologyEntities();
+                }
+            }
+    );
+
+
+    private final LoadingCache<String, List<IsIsElementTopologyEntity>> isIsElementTopologyEntities = createCache(
+            new CacheLoader<String, List<IsIsElementTopologyEntity>>() {
+                @Override
+                public List<IsIsElementTopologyEntity> load(String key) {
+                    return topologyEntityDao.getIsIsElementTopologyEntities();
+                }
+            }
+    );
+
+    private final LoadingCache<String, List<LldpElementTopologyEntity>> lldpElementTopologyEntities = createCache(
+            new CacheLoader<String, List<LldpElementTopologyEntity>>() {
+                @Override
+                public List<LldpElementTopologyEntity> load(String key) {
+                    return topologyEntityDao.getLldpElementTopologyEntities();
                 }
             }
     );
@@ -85,17 +106,29 @@ public class TopologyEntityCacheImpl implements TopologyEntityCache {
                 .build(loader);
     }
 
-
+    @Override
     public List<NodeTopologyEntity> getNodeTopolgyEntities() {
         return this.nodeTopologyEntities.getUnchecked(KEY);
     }
 
+    @Override
     public List<CdpLinkTopologyEntity> getCdpLinkTopologyEntities() {
         return this.cdpLinkTopologyEntities.getUnchecked(KEY);
     }
 
+    @Override
     public List<CdpElementTopologyEntity> getCdpElementTopologyEntities() {
         return this.cdpElementTopologyEntities.getUnchecked(KEY);
+    }
+
+    @Override
+    public List<IsIsElementTopologyEntity> getIsIsElementTopologyEntities() {
+        return this.isIsElementTopologyEntities.getUnchecked(KEY);
+    }
+
+    @Override
+    public List<LldpElementTopologyEntity> getLldpElementTopologyEntities() {
+        return this.lldpElementTopologyEntities.getUnchecked(KEY);
     }
 
     @Override
