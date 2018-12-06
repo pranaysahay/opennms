@@ -32,6 +32,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -105,7 +106,25 @@ public class DroolsAlarmContext extends ManagedDroolsContext implements AlarmLif
 
             final Set<Integer> alarmIdsToAdd = Sets.difference(alarmIdsInDb, alarmIdsInWorkingMem).immutableCopy();
             final Set<Integer> alarmIdsToRemove = Sets.difference(alarmIdsInWorkingMem, alarmIdsInDb).immutableCopy();
-            final Set<Integer> alarmIdsToUpdate = Sets.intersection(alarmIdsInWorkingMem, alarmIdsInDb).immutableCopy();
+            final Set<Integer> alarmIdsToUpdate = Sets.intersection(alarmIdsInWorkingMem, alarmIdsInDb)
+                    .stream()
+                    .filter(alarmId -> {
+                        final AlarmAndFact alarmAndFact = alarmsById.get(alarmId);
+                        final OnmsAlarm alarmInMem = alarmAndFact.getAlarm();
+                        final OnmsAlarm alarmInDb = alarmsInDbById.get(alarmId);
+                        // Only update the alarms if they are different
+                        return shouldUpdateAlarmForSnapshot(alarmInMem, alarmInDb);
+                    })
+                    .collect(Collectors.toSet());
+
+            if (LOG.isDebugEnabled()) {
+                if (alarmIdsToAdd.size() > 0 || alarmIdsToRemove.size() > 0 || alarmIdsToUpdate.size() > 0) {
+                    LOG.debug("Adding {} alarms, removing {} alarms and updating {} alarms for snapshot.",
+                            alarmIdsToAdd.size(), alarmIdsToRemove.size(), alarmIdsToUpdate.size());
+                } else {
+                    LOG.debug("No actions to perform for alarm snapshot.");
+                }
+            }
 
             for (Integer alarmIdToRemove : alarmIdsToRemove) {
                 handleDeletedAlarmNoLock(alarmIdToRemove);
@@ -116,9 +135,24 @@ public class DroolsAlarmContext extends ManagedDroolsContext implements AlarmLif
             for (Integer alarmIdToUpdate : alarmIdsToUpdate) {
                 handleNewOrUpdatedAlarmNoLock(alarmsInDbById.get(alarmIdToUpdate));
             }
+
+            LOG.debug("Done handling snapshot.");
         } finally {
             unlockIfNotFiring();
         }
+    }
+
+    /**
+     * Used to determine if an alarm that is presently in the working memory should be updated
+     * with the given alarm, when handling alarm snapshots.
+     *
+     * @param alarmInMem the alarm that is currently in the working memory
+     * @param alarmInDb the alarm that is currently in the database
+     * @return true if the alarm in the working memory should be updated, false otherwise
+     */
+    protected static boolean shouldUpdateAlarmForSnapshot(OnmsAlarm alarmInMem, OnmsAlarm alarmInDb) {
+        return !Objects.equals(alarmInMem.getLastEventTime(), alarmInDb.getLastEventTime()) ||
+                !Objects.equals(alarmInMem.getAckTime(), alarmInDb.getAckTime());
     }
 
     @Override
