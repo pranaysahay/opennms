@@ -13,5 +13,6 @@
   <modules>
     <module>api</module>
     <module>ticket-strategy</module>
+    <module>browser-strategy</module>
   </modules>
 </project>

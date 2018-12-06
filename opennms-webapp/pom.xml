@@ -614,6 +614,11 @@
       <artifactId>org.opennms.features.measurements.impl</artifactId>
       <scope>${onmsLibScope}</scope>
     </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty.websocket</groupId>
+      <artifactId>websocket-servlet</artifactId>
+      <version>${jettyVersion}</version>
+    </dependency>
 
     <!-- indirect 3rd-party dependencies that belong in $OPENNMS_HOME/lib -->
     <!-- these should all be <scope>${onmsLibScope}</scope> and also included in opennms-base-assembly -->
@@ -902,6 +907,11 @@
       <groupId>org.mockito</groupId>
       <artifactId>mockito-all</artifactId>
       <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.opennms.features.notifications</groupId>
+      <artifactId>org.opennms.features.notifications.browser-strategy</artifactId>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 
